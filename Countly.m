@@ -914,6 +914,10 @@ NSString* const kCLYUserCustom = @"custom";
 	return self;
 }
 
+- (BOOL)started {
+    return timer != nil;
+}
+
 - (void)start:(NSString *)appKey withHost:(NSString *)appHost
 {
 	timer = [NSTimer scheduledTimerWithTimeInterval:COUNTLY_DEFAULT_UPDATE_INTERVAL

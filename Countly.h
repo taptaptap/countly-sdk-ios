@@ -23,6 +23,8 @@
 
 + (instancetype)sharedInstance;
 
+- (BOOL)started;
+
 - (void)start:(NSString *)appKey withHost:(NSString *)appHost;
 
 - (void)startOnCloudWithAppKey:(NSString *)appKey;
