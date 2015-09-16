@@ -895,27 +895,12 @@ NSString* const kCLYUserCustom = @"custom";
         self.crashCustom = nil;
         
         self.messageInfos = [NSMutableDictionary new];
-
-#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
-		[[NSNotificationCenter defaultCenter] addObserver:self
-												 selector:@selector(didEnterBackgroundCallBack:)
-													 name:UIApplicationDidEnterBackgroundNotification
-												   object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self
-												 selector:@selector(willEnterForegroundCallBack:)
-													 name:UIApplicationWillEnterForegroundNotification
-												   object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self
-												 selector:@selector(willTerminateCallBack:)
-													 name:UIApplicationWillTerminateNotification
-												   object:nil];
-#endif
 	}
 	return self;
 }
 
 - (BOOL)started {
-    return timer != nil;
+    return [CountlyConnectionQueue sharedInstance].appKey != nil;
 }
 
 - (void)start:(NSString *)appKey withHost:(NSString *)appHost
@@ -929,6 +914,31 @@ NSString* const kCLYUserCustom = @"custom";
 	[[CountlyConnectionQueue sharedInstance] setAppKey:appKey];
 	[[CountlyConnectionQueue sharedInstance] setAppHost:appHost];
 	[[CountlyConnectionQueue sharedInstance] beginSession];
+    
+#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(didEnterBackgroundCallBack:)
+                                                 name:UIApplicationDidEnterBackgroundNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(willEnterForegroundCallBack:)
+                                                 name:UIApplicationWillEnterForegroundNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(willTerminateCallBack:)
+                                                 name:UIApplicationWillTerminateNotification
+                                               object:nil];
+#endif
+}
+
+- (void)stop {
+    [[CountlyConnectionQueue sharedInstance] setAppKey:nil];
+    
+#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillEnterForegroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillTerminateNotification object:nil];
+#endif
 }
 
 - (void)startOnCloudWithAppKey:(NSString *)appKey
@@ -1065,7 +1075,7 @@ NSString* const kCLYUserCustom = @"custom";
 
 - (void)onTimer:(NSTimer *)timer
 {
-	if (isSuspended == YES)
+	if (isSuspended || !self.started)
 		return;
     
 	double currTime = CFAbsoluteTimeGetCurrent();
