@@ -1,15 +1,22 @@
+
+**Slack user?** [Join our Slack community](http://slack.count.ly:3000/)
+
 ##What's Countly?
-[Countly](http://count.ly) is an innovative, real-time, open source mobile analytics and push notifications platform. It collects data from mobile devices, and visualizes this information to analyze mobile application 
-usage and end-user behavior. There are two parts of Countly: [the server that collects and analyzes data](http://github.com/countly/countly-server), and mobile SDK that sends this data. Both parts are open source with different licensing terms.
+[Countly](http://count.ly) is an innovative, real-time, open source mobile analytics and push notifications platform. It collects data from mobile devices, and visualizes this information to analyze mobile application usage and end-user behavior. There are two parts of Countly: [the server that collects and analyzes data](http://github.com/countly/countly-server), and mobile SDK that sends this data. Both parts are open source with different licensing terms.
 
 ##About
 
-This repository includes the Countly iOS & OS X SDK. See [Countly SDK for iOS and OS X](http://resources.count.ly/v1.0/docs/countly-sdk-for-ios-and-os-x) documentation at [Countly Resources](http://resources.count.ly) for installation. 
+This repository includes the Countly iOS SDK which supports watchOS, tvOS & OSX also. See [Countly iOS SDK](http://resources.count.ly/v1.0/docs/countly-sdk-for-ios-and-os-x) documentation at [Countly Resources](http://resources.count.ly) for installation. 
 
 
 ### Other Github resources ###
 
-This SDK needs one of Countly mobile analytics & push notifications server editions. For more information about different editions, see [comparison table](https://count.ly/compare/).
+This SDK needs one of the following Countly Editions to work: 
+
+* Countly Community Edition, [downloadable from Github](https://github.com/Countly/countly-server)
+* [Countly Enterprise Edition](http://count.ly/enterprise-edition)
+
+For more information about Countly Enterprise Edition, see [comparison of different Countly editions](https://count.ly/compare/)
 
 There are also other Countly SDK repositories (both official and community supported) on [Countly resources](http://resources.count.ly/v1.0/docs/downloading-sdks).
 

@@ -1,4 +1,3 @@
-
 // Countly.h
 //
 // This code is provided under the MIT License.
@@ -6,71 +5,158 @@
 // Please visit www.count.ly for more information.
 
 #import <Foundation/Foundation.h>
-#if (TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR) && (!COUNTLY_TARGET_WATCHKIT)
-#import <UIKit/UIKit.h>
-#endif
-@class CountlyEventQueue;
+#import <CoreLocation/CoreLocation.h>
+#import "CountlyUserDetails.h"
+#import "CountlyCrashReporter.h"
+#import "CountlyConfig.h"
 
 @interface Countly : NSObject
-{
-	double unsentSessionLength;
-	NSTimer *timer;
-    time_t startTime;
-	double lastTime;
-	BOOL isSuspended;
-    CountlyEventQueue *eventQueue;
-}
 
+#pragma mark - Countly Core
+
+/**
+ * Returns @c Countly singleton to be used throughout the app.
+ * @return The shared @c Countly object
+ */
 + (instancetype)sharedInstance;
 
-- (BOOL)started;
+/**
+ * Starts Countly with given configuration and begins session.
+ * @param config @c CountlyConfig object that defines host, app key, optional features and other settings
+ */
+- (void)startWithConfig:(CountlyConfig *)config;
 
-- (void)start:(NSString *)appKey withHost:(NSString *)appHost;
+/**
+ * Sets new device ID to be persistently stored and used in following requests.
+ * @param deviceID New device ID
+ * @param onServer If set, data on server will be merged automatically, otherwise device will be counted as a new device
+ */
+- (void)setNewDeviceID:(NSString *)deviceID onServer:(BOOL)onServer;
 
-- (void)stop;
+/**
+ * Sets the value of the custom HTTP header field to be sent with every request if @c customHeaderFieldName is set on initial configuration.
+ * @param customHeaderFieldValue Custom header field value
+ * @discussion If @c customHeaderFieldValue on initial configuration can not be set on app launch, this method can be used to do so later. Requests not started due to missing @c customHeaderFieldValue since app launch will start hereafter.
+ */
+- (void)setCustomHeaderFieldValue:(NSString *)customHeaderFieldValue;
 
-- (void)startOnCloudWithAppKey:(NSString *)appKey;
+/**
+ * Suspends Countly, add recorded events to request queue and ends current session.
+ * @discussion This method needs to be called manually only on @c watchOS, on other platforms it will be called automatically.
+ */
+- (void)suspend;
 
-- (void)recordEvent:(NSString *)key count:(int)count;
+/**
+ * Resumes Countly, begins a new session after app comes to foreground.
+ * @discussion This method needs to be called manually only on @c watchOS, on other platforms it will be called automatically.
+ */
+- (void)resume;
 
-- (void)recordEvent:(NSString *)key count:(int)count sum:(double)sum;
+- (BOOL) started;
+- (void) stop;
 
-- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count;
+#pragma mark - Countly CustomEvents
 
-- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(int)count sum:(double)sum;
+/**
+ * Records event with given key.
+ * @param key Event key
+ */
+- (void)recordEvent:(NSString *)key;
 
-- (void)recordUserDetails:(NSDictionary *)userDetails;
-extern NSString* const kCLYUserName;
-extern NSString* const kCLYUserUsername;
-extern NSString* const kCLYUserEmail;
-extern NSString* const kCLYUserOrganization;
-extern NSString* const kCLYUserPhone;
-extern NSString* const kCLYUserGender;
-extern NSString* const kCLYUserPicture;
-extern NSString* const kCLYUserPicturePath;
-extern NSString* const kCLYUserBirthYear;
-extern NSString* const kCLYUserCustom;
+/**
+ * Records event with given key and count.
+ * @param key Event key
+ * @param count Count of event occurrences
+ */
+- (void)recordEvent:(NSString *)key count:(NSUInteger)count;
+
+/**
+ * Records event with given key and sum.
+ * @param key Event key
+ * @param sum Sum of any specific value to event (i.e. Total In-App Purchase amount)
+ */
+- (void)recordEvent:(NSString *)key sum:(double)sum;
+
+/**
+ * Records event with given key and duration.
+ * @param key Event key
+ * @param duration Duration of event in seconds
+ */
+- (void)recordEvent:(NSString *)key duration:(NSTimeInterval)duration;
+
+/**
+ * Records event with given key, count and sum.
+ * @param key Event key
+ * @param count Count of event occurrences
+ * @param sum Sum of any specific value to event (i.e. Total In-App Purchase amount)
+ */
+- (void)recordEvent:(NSString *)key count:(NSUInteger)count sum:(double)sum;
+
+/**
+ * Records event with given key and segmentation.
+ * @param key Event key
+ * @param segmentation Segmentation key-value pairs of event
+ */
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation;
+
+/**
+ * Records event with given key, segmentation and count.
+ * @param key Event key
+ * @param segmentation Segmentation key-value pairs of event
+ * @param count Count of event occurrences
+ */
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count;
+
+/**
+ * Records event with given key, segmentation, count and sum.
+ * @param key Event key
+ * @param segmentation Segmentation key-value pairs of event
+ * @param count Count of event occurrences
+ * @param sum Sum of any specific value to event (i.e. Total In-App Purchase amount)
+ */
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum;
+
+/**
+ * Records event with given key, segmentation, count, sum and duration.
+ * @param key Event key
+ * @param segmentation Segmentation key-value pairs of event
+ * @param count Count of event occurrences
+ * @param sum Sum of any specific value to event (i.e. Total In-App Purchase amount)
+ * @param duration Duration of event in seconds
+ */
+- (void)recordEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum duration:(NSTimeInterval)duration;
+
+/**
+ * Starts a timed event with given key to be ended later. Duration of timed event will be calculated on ending. 
+ * @discussion Trying to start an event with already started key will have no effect.
+ * @param key Event key
+ */
+- (void)startEvent:(NSString *)key;
+
+/**
+ * Ends a previously started timed event with given key.
+ * @discussion Trying to end an event with already ended (or not yet started) key will have no effect.
+ * @param key Event key
+ */
+- (void)endEvent:(NSString *)key;
+
+/**
+ * Ends a previously started timed event with given key, segmentation, count and sum. 
+ * @discussion Trying to end an event with already ended (or not yet started) key will have no effect.
+ * @param key Event key
+ * @param segmentation Segmentation key-value pairs of event
+ * @param count Count of event occurrences
+ * @param sum Sum of any specific value to event (i.e. Total In-App Purchase amount)
+ */
+- (void)endEvent:(NSString *)key segmentation:(NSDictionary *)segmentation count:(NSUInteger)count sum:(double)sum;
+
+
 
 #pragma mark - Countly Messaging
-#if (TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR) && (!COUNTLY_TARGET_WATCHKIT)
-/**
- * Countly Messaging support
- */
-- (void)startWithMessagingUsing:(NSString *)appKey withHost:(NSString *)appHost andOptions:(NSDictionary *)options;
-
-/**
- * Make this device a test device, so only messages with test checkbox will arrive on it.
- */
-- (void)startWithTestMessagingUsing:(NSString *)appKey withHost:(NSString *)appHost andOptions:(NSDictionary *)options;
-
+#if TARGET_OS_IOS
 - (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken;
 
 - (void)didFailToRegisterForRemoteNotifications;
-
-/**
- * Records user's location and sends it to the server with next updateSession. This value will be used instead of geoip lookup on the server when sending geolocation-aware push notifications.
- */
-- (void)setLocation:(double)latitude longitude:(double)longitude;
 
 /**
  * Create a set of UIMutableUserNotificationCategory'ies which you can register in addition to your ones to enable iOS 8 actions.
@@ -114,57 +200,100 @@ extern NSString* const kCLYUserCustom;
  * @param c NSDictionary of @"c" userInfo key.
  */
 - (void)recordPushActionForCountlyDictionary:(NSDictionary *)c;
+
+
+/**
+ * Records location with given coordinate to be used for location-aware push notifications.
+ * @param coordinate CLLocationCoordinate2D struct with latitude and longitude
+ */
+- (void)recordLocation:(CLLocationCoordinate2D)coordinate;
 #endif
+
+
 
 #pragma mark - Countly CrashReporting
-/*
- This SDK can be used for Countly CrashReporting service in addition to Countly Analytics.
- If the only thing you need is Countly Analytics, you can skip this section. 
- For Countly CrashReporting, you'll need to add one more line of Countly code to your application:
- 
- For iOS, inside `application:didFinishLaunchingWithOptions:` method, just after the line you started Countly, add this line:
- `[[Countly sharedInstance] startCrashReporting];`
- 
- With this one line of code, Countly iOS SDK will generate a crash report if your application crashes due to an exception, and send it to Countly Server for further inspection. If a crash report can not be delivered to server (i.e. no internet connection, unavailable server), the SDK stores the crash report locally in order to try again later.
- 
- And you can use `CountlyCrashLog()` (just like `NSLog()`) to get custom logs with the crash reports. Logs generated by `CountlyCrashLog()` are stored in a non-persistent structure, and delivered to server only in case of a crash.
- 
- A crash report includes following information in addition to Countly Analytics already provides:
- 
- - Exception Name
- - Exception Description
- - Stack Trace
- - Used RAM
- - Total RAM
- - Used Disk
- - Total Disk
- - Battery Level 
- - Device Orientation
- - Connection Type
- - OpenGL ES Version
- - Jailbrake State
- - Background State
- - Time Since Launch
- - Custom Logs generated by `CountlyCrashLog()`
+#if TARGET_OS_IOS
+/**
+ * Records a handled exception manually, besides automatically reported unhandled exceptions and crashes.
+ * @param exception Exception to be reported
  */
-#if (TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR) && (!COUNTLY_TARGET_WATCHKIT)
-- (void)startCrashReporting;
-- (void)startCrashReportingWithSegments:(NSDictionary *)segments;
 - (void)recordHandledException:(NSException *)exception;
 
-- (void)crashTest;
-- (void)crashTest2;
-- (void)crashTest3;
-- (void)crashTest4;
-
-void CCL(const char* function, NSUInteger line, NSString* message);
-#define CountlyCrashLog(format, ...) CCL(__FUNCTION__,__LINE__, [NSString stringWithFormat:(format), ##__VA_ARGS__])
+/**
+ * Records custom logs to be delivered with crash report.
+ * @discussion Logs recorded by `crashLog:` method are stored in a non-persistent structure, and delivered to server only in case of a crash.
+ * @param format Custom log string or format to be recorded
+ */
+- (void)crashLog:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
 #endif
 
 
-#pragma mark - Countly Background Fetch Session Ending
-#if (TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR) && (!COUNTLY_TARGET_WATCHKIT)
-- (void)endBackgroundSessionWithCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler;
+
+#pragma mark - Countly APM
+
+/**
+ * Adds exception URL for APM. Added URLs (with or without specific path) will be ignored by APM. Adding an already added URL again will have no effect.
+ * @param exceptionURL Exception URL to be added
+ */
+- (void)addExceptionForAPM:(NSString *)exceptionURL;
+
+/**
+ * Removes exception URL for APM. Removing an already removed (or not yet added) URL again will have no effect.
+ * @param exceptionURL Exception URL to be removed
+ */
+- (void)removeExceptionForAPM:(NSString *)exceptionURL;
+
+
+
+#pragma mark - Countly AutoViewTracking
+
+/**
+ * Reports a visited view with given name manually. 
+ * @discussion If auto ViewTracking feature is activated on start configuration, this method does not need to be called manually.
+ * @param viewName Name of the view visited
+ */
+- (void)reportView:(NSString *)viewName;
+
+#if TARGET_OS_IOS
+/**
+ * Adds exception @c UIViewController subclass for AutoViewTracking.
+ * @discussion Added @c UIViewContoller subclasses will be ignored by AutoViewTracking and their appearances and disappearances will not be reported. Adding an already added @c UIViewController subclass again will have no effect.
+ * @param exceptionViewControllerSubclass Exception @c UIViewController subclass to be added
+ */
+- (void)addExceptionForAutoViewTracking:(Class)exceptionViewControllerSubclass;
+
+/**
+ * Removes exception @c UIViewController subclass for AutoViewTracking.
+ * @discussion Removing an already removed (or not yet added) @c UIViewController subclass again will have no effect.
+ * @param exceptionViewControllerSubclass Exception @c UIViewController subclass to be removed
+ */
+- (void)removeExceptionForAutoViewTracking:(Class)exceptionViewControllerSubclass;
+
+/**
+ * Enables or disables AutoViewTracking, if AutoViewTracking feature is activated on start configuration.
+ * @discussion If AutoViewTracking feature is not activated on start configuration, this property has no effect on enabling or disabling it later.
+ */
+@property (nonatomic,readwrite) BOOL isAutoViewTrackingEnabled;
 #endif
 
+
+
+#pragma mark - Countly UserDetails
+
+/**
+ * Returns @c CountlyUserDetails singleton to be used throughout the app.
+ * @return The shared @c CountlyUserDetails object
+ */
++ (CountlyUserDetails *)user;
+
+
+#pragma mark - Countly StarRating
+#if TARGET_OS_IOS
+/**
+ * Shows star-rating dialog manually and executes completion block after user's action.
+ * @discussion Completion block takes a single NSInteger argument that indicates 1 to 5 star-rating given by user. If user dismissed dialog without giving a rating, this value will be 0 and it will not be reported to server.
+ * @param completion A block object to be executed when user gives a star-rating or dismisses dialog without rating
+ */
+- (void)askForStarRating:(void(^)(NSInteger rating))completion;
+#endif
 @end
